@@ -45,6 +45,14 @@ const setLoadtestState = async (loadtest, newState, http) => {
   );
 };
 
+const setLoadtestJobId = async (loadtest, jobId, http) => {
+  const updatedFields = { JobId: jobId };
+  return await http.put(
+    `${loadtestsApiUrl}/${loadtest.OrganisationId}/${loadtest.LoadtestId}`,
+    updatedFields
+  );
+};
+
 exports.getLoadtest = async (request, response) => {
   const http = new HttpClient(request.user);
 
@@ -90,12 +98,14 @@ exports.runPlaybook = async (user, playbook, loadtest, response) => {
   );
 
   const jobData = await jobsApi.createJob({});
+  const jobId = jobData.data.JobId;
+  await setLoadtestJobId(loadtest, jobId, http);
   if (startResponse.status == 200) {
     try {
       let i = 0;
       let userInvertedIndex = usersCount - i;
       while (i < usersCount) {
-        const taskData = await jobsApi.createTask(jobData.data.JobId, {});
+        const taskData = await jobsApi.createTask(jobId, {});
         events.addUserCall(
           loadtest.OrganisationId,
           loadtest.LoadtestId,
