@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "test": "jest --coverage --collectCoverageFrom='src/**/*.js' --silent --ci --testLocationInResults --json --outputFile='report.json'",
+    "lint": "prettier --check src/**/*.js",
+    "format": "prettier --write src/**/*.js"
+  },
+  "devDependencies": {
+    "jest": "^27.0.5",
+    "prettier": "2.3.2"
+  },
+  "jest": {
+    "testMatch": [
+      "<rootDir>/**/__tests__/*.test.js"
+    ],
+    "testPathIgnorePatterns": [
+      "__tests__/helpers.js"
+    ]
+  }
+}

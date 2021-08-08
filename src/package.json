@@ -1,0 +1,28 @@
+{
+  "name": "driver-api",
+  "version": "0.1.0",
+  "private": true,
+  "keywords": [],
+  "dependencies": {
+    "@moggiez/moggies-auth": "^0.2.0",
+    "@moggiez/moggies-lambda-helpers": "^0.2.1",
+    "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "jest": "^27.0.5",
+    "prettier": "2.3.2"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "prettier --check .",
+    "format": "prettier --write ."
+  },
+  "jest": {
+    "testMatch": [
+      "<rootDir>/**/__tests__/*.test.js"
+    ],
+    "testPathIgnorePatterns": [
+      "__tests__/helpers.js"
+    ]
+  }
+}
