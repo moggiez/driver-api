@@ -13,8 +13,12 @@ variable "account" {
   default = "989665778089"
 }
 
-
 variable "user_pool_id" {
   type    = string
   default = "eu-west-1_SPWgZjaBY"
+}
+
+variable "eventbus_name" {
+  type    = string
+  default = "moggiez-load-test"
 }
