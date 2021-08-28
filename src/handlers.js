@@ -53,6 +53,37 @@ const setLoadtestJobId = async (loadtest, jobId, http) => {
   );
 };
 
+exports.getPlaybook = async (request, response, loadtest) => {
+  const http = new HttpClient(request.user);
+  try {
+    const playbookIdVersion = loadtest.PlaybookId;
+    const segments = playbookIdVersion.split(":");
+    let playbookId = null;
+    let playbookVersion = null;
+    if (segments.length == 2) {
+      playbookId = segments[0];
+      playbookVersion = segments[1];
+    } else {
+      playbookId = playbookIdVersion;
+    }
+
+    let playbookUrl = `${playbooksApiUrl}/${loadtest.OrganisationId}/playbooks/${playbookId}`;
+    if (playbookVersion !== null) {
+      playbookUrl = `${playbookUrl}/versions/v${playbookVersion}`;
+    }
+    const playbookResponse = await http.get(playbookUrl);
+
+    if (playbookResponse.status == 200) {
+      return playbookResponse.data;
+    } else {
+      return { error: playbookResponse.data };
+    }
+  } catch (exc) {
+    console.log("Error: " + exc);
+    response(500, "Internal server error.");
+  }
+};
+
 exports.getLoadtest = async (request, response) => {
   const http = new HttpClient(request.user);
 
@@ -67,14 +98,9 @@ exports.getLoadtest = async (request, response) => {
     const loadtestResponse = await http.get(loadtestUrl);
 
     if (loadtestResponse.status == 200) {
-      const playbookId = loadtestResponse.data.PlaybookId;
-      const playbookUrl = `${playbooksApiUrl}/${orgId}/playbooks/${playbookId}`;
-      const playbookResponse = await http.get(playbookUrl);
-
-      return {
-        loadtest: loadtestResponse.data,
-        playbook: playbookResponse.data,
-      };
+      return loadtestResponse.data;
+    } else {
+      return { error: loadtestResponse.data };
     }
   } catch (exc) {
     console.log("Error: " + exc);
