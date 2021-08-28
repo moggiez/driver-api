@@ -14,3 +14,23 @@ resource "aws_iam_policy" "eventbridge_events" {
     ]
   })
 }
+
+resource "aws_iam_policy" "invoke_lambda" {
+  name        = "${var.domain_name}-driver-api-InvokeLambda"
+  path        = "/"
+  description = "IAM policy for invoking lambda functions"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "lambda:InvokeFunction",
+          "lambda:InvokeAsync"
+        ],
+        "Resource" : "arn:aws:lambda:${var.region}:${var.account}:*"
+      }
+    ]
+  })
+}

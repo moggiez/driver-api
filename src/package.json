@@ -5,8 +5,9 @@
   "keywords": [],
   "dependencies": {
     "@moggiez/moggies-auth": "^0.2.0",
-    "@moggiez/moggies-lambda-helpers": "^0.2.1",
-    "axios": "^0.21.1"
+    "@moggiez/moggies-lambda-helpers": "^0.2.2",
+    "axios": "^0.21.1",
+    "parse-domain": "^3.0.3"
   },
   "devDependencies": {
     "jest": "^27.0.5",

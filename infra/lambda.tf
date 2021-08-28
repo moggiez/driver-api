@@ -7,7 +7,8 @@ module "api_lambda" {
   environment = local.environment
   timeout     = 60
   policies = [
-    aws_iam_policy.eventbridge_events.arn
+    aws_iam_policy.eventbridge_events.arn,
+    aws_iam_policy.invoke_lambda.arn
   ]
 }
 

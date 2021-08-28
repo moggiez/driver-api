@@ -1,6 +1,7 @@
 const events = require("./events");
 const { HttpClient } = require("./httpClient");
 const { JobsApiClient } = require("./jobsApiClient");
+const { parseDomain, ParseResultType } = require("parse-domain");
 
 const loadtestStates = {
   STARTED: "Started",
@@ -45,12 +46,53 @@ const setLoadtestState = async (loadtest, newState, http) => {
   );
 };
 
+exports.setLoadtestState = setLoadtestState;
+
 const setLoadtestJobId = async (loadtest, jobId, http) => {
   const updatedFields = { JobId: jobId };
   return await http.put(
     `${loadtestsApiUrl}/${loadtest.OrganisationId}/${loadtest.LoadtestId}`,
     updatedFields
   );
+};
+
+const canRunPlaybookStep = async (step, organisationValidDomains) => {
+  const stepHostname = step.requestOptions.hostname;
+  const parseResult = parseDomain(stepHostname);
+  if (parseResult.type === ParseResultType.Listed) {
+    const { domain, topLevelDomains } = parseResult;
+    const stepDomain = `${domain}.${topLevelDomains.join(".")}`;
+    console.log("organisationValidDomains", organisationValidDomains);
+    const matchingDomains = organisationValidDomains.Items.filter(
+      (domain) => domain.DomainName === stepDomain
+    );
+    return matchingDomains.length > 0;
+  } else {
+    // In the future we can add handling for ParseResultType.Ip
+    return false;
+  }
+};
+
+exports.canRunPlaybook = async (playbook, internalApiClient) => {
+  try {
+    const domainsData = await internalApiClient.invoke(
+      "getOrganisationValidDomains",
+      { organisationId: playbook.OrganisationId }
+    );
+    for (const idx in playbook.Steps) {
+      const step = playbook.Steps[idx];
+      const canRunStep = await canRunPlaybookStep(step, domainsData);
+      if (!canRunStep) {
+        return {
+          result: false,
+          reason: `Cannot run step: hostname ${step.requestOptions.hostname} is not allowed.`,
+        };
+      }
+    }
+    return { result: true };
+  } catch (err) {
+    return { result: false, reason: err };
+  }
 };
 
 exports.getPlaybook = async (request, response, loadtest) => {
