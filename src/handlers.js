@@ -62,7 +62,6 @@ const canRunPlaybookStep = async (step, organisationValidDomains) => {
   if (parseResult.type === ParseResultType.Listed) {
     const { domain, topLevelDomains } = parseResult;
     const stepDomain = `${domain}.${topLevelDomains.join(".")}`;
-    console.log("organisationValidDomains", organisationValidDomains);
     const matchingDomains = organisationValidDomains.Items.filter(
       (domain) => domain.DomainName === stepDomain
     );
