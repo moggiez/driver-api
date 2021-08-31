@@ -10,6 +10,9 @@ const loadtestStates = {
   ABORTED: "Aborted",
 };
 
+const FREE_QUOTA_USERS = 100;
+const FREE_QUOTA_CALLS = 500;
+
 const usersApiUrl = "https://users-api.moggies.io";
 const loadtestsApiUrl = "https://loadtests-api.moggies.io";
 const playbooksApiUrl = "https://playbooks-api.moggies.io";
@@ -56,7 +59,24 @@ const setLoadtestJobId = async (loadtest, jobId, http) => {
   );
 };
 
-const canRunPlaybookStep = async (step, organisationValidDomains) => {
+const validateQuota = (step, response) => {
+  if (step.users > FREE_QUOTA_USERS) {
+    response(
+      400,
+      `Maximum number of users (${FREE_QUOTA_USERS}) exceeded. This limitation applies to the Free Plan.`
+    );
+  }
+
+  const quota = step.users * step.repeats;
+  if (quota > FREE_QUOTA_CALLS) {
+    response(
+      400,
+      `Maximum number of http calls (${FREE_QUOTA_CALLS}) exceeded. This limitation applies to the Free Plan.`
+    );
+  }
+};
+
+const canRunPlaybookStep = async (step, organisationValidDomains, response) => {
   const stepHostname = step.requestOptions.hostname;
   const parseResult = parseDomain(stepHostname);
   if (parseResult.type === ParseResultType.Listed) {
@@ -65,14 +85,19 @@ const canRunPlaybookStep = async (step, organisationValidDomains) => {
     const matchingDomains = organisationValidDomains.Items.filter(
       (domain) => domain.DomainName === stepDomain
     );
-    return matchingDomains.length > 0;
+    if (matchingDomains.length < 1) {
+      response(
+        400,
+        `Cannot run step: hostname ${stepHostnamee} is not allowed.`
+      );
+    }
   } else {
     // In the future we can add handling for ParseResultType.Ip
-    return false;
+    response(400, `Cannot run step: hostname ${stepHostname} is not allowed.`);
   }
 };
 
-exports.canRunPlaybook = async (playbook, internalApiClient) => {
+exports.canRunPlaybook = async (playbook, internalApiClient, response) => {
   try {
     const domainsData = await internalApiClient.invoke(
       "getOrganisationValidDomains",
@@ -80,7 +105,8 @@ exports.canRunPlaybook = async (playbook, internalApiClient) => {
     );
     for (const idx in playbook.Steps) {
       const step = playbook.Steps[idx];
-      const canRunStep = await canRunPlaybookStep(step, domainsData);
+      validateQuota(step, response);
+      await canRunPlaybookStep(step, domainsData, response);
       if (!canRunStep) {
         return {
           result: false,

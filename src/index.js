@@ -51,7 +51,8 @@ exports.handler = async function (event, context, callback) {
       });
       const canRunResult = await handlers.canRunPlaybook(
         playbook,
-        internalApiClient
+        internalApiClient,
+        response
       );
       if (canRunResult.result) {
         await handlers.runPlaybook(user, playbook, loadtest, response);
