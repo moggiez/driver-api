@@ -182,6 +182,9 @@ exports.runPlaybook = async (user, playbook, loadtest, response) => {
           userCallParams,
           userInvertedIndex
         ); // mark user index
+        if (i % 10 === 0) {
+          await events.triggerUserCalls();
+        }
         i++;
         userInvertedIndex = usersCount - i;
       }
