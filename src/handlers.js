@@ -75,10 +75,7 @@ const validateQuota = (step, response) => {
     );
   }
   if (quota < 10) {
-    response(
-      400,
-      `Minimum number of http calls is 10.
-    );
+    response(400, "Minimum number of http calls is 10.");
   }
 };
 
