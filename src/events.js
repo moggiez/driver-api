@@ -41,24 +41,28 @@ exports.addUserCall = (
 
 exports.triggerUserCalls = () => {
   return new Promise((resolve, reject) => {
-    eventbridge.putEvents(params, function (err, data) {
-      if (err) {
-        reject(err);
-      } else {
-        if (data.FailedEntryCount == 0) {
-          const message = {
-            triggeredRule: data.RuleArn,
-            message: SUCCESS_MSG_HTTP_RESP,
-          };
-          params.Entries = [];
-          resolve(message);
+    if (params.Entries.length > 0) {
+      eventbridge.putEvents(params, function (err, data) {
+        if (err) {
+          reject(err);
         } else {
-          const errPayload = {
-            data: data,
-          };
-          reject(errPayload);
+          if (data.FailedEntryCount == 0) {
+            const message = {
+              triggeredRule: data.RuleArn,
+              message: SUCCESS_MSG_HTTP_RESP,
+            };
+            params.Entries.splice(0, params.Entries.length);
+            resolve(message);
+          } else {
+            const errPayload = {
+              data: data,
+            };
+            reject(errPayload);
+          }
         }
-      }
-    });
+      });
+    } else {
+      resolve(SUCCESS_MSG_HTTP_RESP);
+    }
   });
 };

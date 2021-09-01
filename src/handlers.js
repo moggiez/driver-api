@@ -74,6 +74,12 @@ const validateQuota = (step, response) => {
       `Maximum number of http calls (${FREE_QUOTA_CALLS}) exceeded. This limitation applies to the Free Plan.`
     );
   }
+  if (quota < 10) {
+    response(
+      400,
+      `Minimum number of http calls is 10.
+    );
+  }
 };
 
 const canRunPlaybookStep = async (step, organisationValidDomains, response) => {
@@ -88,7 +94,7 @@ const canRunPlaybookStep = async (step, organisationValidDomains, response) => {
     if (matchingDomains.length < 1) {
       response(
         400,
-        `Cannot run step: hostname ${stepHostnamee} is not allowed.`
+        `Cannot run step: hostname ${stepHostname} is not allowed.`
       );
     }
   } else {
@@ -107,12 +113,6 @@ exports.canRunPlaybook = async (playbook, internalApiClient, response) => {
       const step = playbook.Steps[idx];
       validateQuota(step, response);
       await canRunPlaybookStep(step, domainsData, response);
-      if (!canRunStep) {
-        return {
-          result: false,
-          reason: `Cannot run step: hostname ${step.requestOptions.hostname} is not allowed.`,
-        };
-      }
     }
     return { result: true };
   } catch (err) {
