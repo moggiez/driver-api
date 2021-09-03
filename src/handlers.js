@@ -86,7 +86,7 @@ const canRunPlaybookStep = async (step, organisationValidDomains, response) => {
     const { domain, topLevelDomains } = parseResult;
     const stepDomain = `${domain}.${topLevelDomains.join(".")}`;
     const matchingDomains = organisationValidDomains.Items.filter(
-      (domain) => domain.DomainName === stepDomai
+      (domain) => domain.DomainName === stepDomain
     );
 
     // TODO remove moggies.io as always allowed
