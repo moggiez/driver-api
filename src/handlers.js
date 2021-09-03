@@ -86,9 +86,11 @@ const canRunPlaybookStep = async (step, organisationValidDomains, response) => {
     const { domain, topLevelDomains } = parseResult;
     const stepDomain = `${domain}.${topLevelDomains.join(".")}`;
     const matchingDomains = organisationValidDomains.Items.filter(
-      (domain) => domain.DomainName === stepDomain
+      (domain) => domain.DomainName === stepDomai
     );
-    if (matchingDomains.length < 1) {
+
+    // TODO remove moggies.io as always allowed
+    if (matchingDomains.length < 1 && stepDomain !== "moggies.io") {
       response(
         400,
         `Cannot run step: hostname ${stepHostname} is not allowed.`
