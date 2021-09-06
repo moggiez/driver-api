@@ -1,15 +1,18 @@
 "use strict";
 
+const uuid = require("uuid");
 const { HttpClient } = require("./httpClient");
 
 const usersApiUrl = "https://users-api.moggies.io";
 const jobsApiUrl = "https://jobs-api.moggies.io";
 
 class JobsApiClient {
-  constructor(user) {
+  constructor(user, internalApiClient) {
     this.http = new HttpClient(user);
     this.user = user;
     this.organisationId = null;
+    this.internalApiClient = internalApiClient;
+    this.tasks = [];
   }
 
   async _getOrganisationId() {
@@ -29,22 +32,33 @@ class JobsApiClient {
 
   async createJob(data) {
     const orgId = await this._getOrganisationId();
-    const newJobUrl = `${jobsApiUrl}/${orgId}/jobs`;
-    const payload = data;
-    if ("TaskId" in data) {
-      delete data["TaskId"];
-    }
-    return this.http.post(newJobUrl, payload);
+    const finalData = { ...data, OrganisationId: orgId };
+    const jobId = uuid.v4();
+    await this.internalApiClient.invoke("createJob", {
+      jobId: jobId,
+      data: finalData,
+    });
+    return jobId;
   }
 
-  async createTask(jobId, data) {
+  async addTask(jobId, data) {
     const orgId = await this._getOrganisationId();
-    const newJobUrl = `${jobsApiUrl}/${orgId}/jobs/${jobId}/tasks`;
-    const payload = data;
-    if ("TaskId" in data) {
-      delete data["TaskId"];
-    }
-    return this.http.post(newJobUrl, payload);
+    const taskId = uuid.v4();
+    const taskData = {
+      ...data,
+      OrganisationId: orgId,
+      JobId: jobId,
+      TaskId: taskId,
+    };
+    this.tasks.push(taskData);
+    return taskId;
+  }
+
+  async createTasks() {
+    await this.internalApiClient.invoke("batchCreate", {
+      records: this.tasks,
+    });
+    this.tasks.splice(0, this.tasks.length);
   }
 }
 

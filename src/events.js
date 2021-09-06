@@ -12,15 +12,15 @@ const params = {
   Entries: [],
 };
 
-exports.addUserCall = (
+exports.addUserCall = ({
   customerId,
   loadtestId,
   jobId,
   taskId,
   user,
   eventParams,
-  userInvertedIndex
-) => {
+  userInvertedIndex,
+}) => {
   const event = {
     Source: EVENT_SOURCE,
     DetailType: eventTypes.USER_CALLS_EVENT_TYPE,
