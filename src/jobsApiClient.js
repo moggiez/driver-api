@@ -1,17 +1,13 @@
 "use strict";
 
 const uuid = require("uuid");
-const { HttpClient } = require("./httpClient");
-
-const usersApiUrl = "https://users-api.moggies.io";
-const jobsApiUrl = "https://jobs-api.moggies.io";
 
 class JobsApiClient {
-  constructor(user, internalApiClient) {
-    this.http = new HttpClient(user);
+  constructor(user, internalJobsApi, internalUsersApi) {
     this.user = user;
     this.organisationId = null;
-    this.internalApiClient = internalApiClient;
+    this.internalJobsApi = internalJobsApi;
+    this.internalUsersApi = internalUsersApi;
     this.tasks = [];
   }
 
@@ -20,21 +16,22 @@ class JobsApiClient {
       return this.organisationId;
     }
 
-    const usersResponse = await this.http.get(`${usersApiUrl}/${this.user.id}`);
-    if (
-      usersResponse.status != 200 ||
-      !("OrganisationId" in usersResponse.data)
-    ) {
+    const org = await this.internalUsersApi.invoke("getUserOrganisation", {
+      userId: this.user.id,
+    });
+    if (org != null) {
+      this.organisationId = org.OrganisationId;
+      return this.organisationId;
+    } else {
       throw new Error("User organisation could not be retrieved.");
     }
-    return usersResponse.data.OrganisationId;
   }
 
   async createJob(data) {
     const orgId = await this._getOrganisationId();
     const finalData = { ...data, OrganisationId: orgId };
     const jobId = uuid.v4();
-    await this.internalApiClient.invoke("createJob", {
+    await this.internalJobsApi.invoke("createJob", {
       jobId: jobId,
       data: finalData,
     });
@@ -55,7 +52,7 @@ class JobsApiClient {
   }
 
   async createTasks() {
-    await this.internalApiClient.invoke("batchCreate", {
+    await this.internalJobsApi.invoke("batchCreate", {
       records: this.tasks,
     });
     this.tasks.splice(0, this.tasks.length);

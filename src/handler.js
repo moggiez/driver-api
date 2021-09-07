@@ -9,6 +9,11 @@ const FREE_QUOTA_CALLS = 500;
 class Handler {
   constructor({ AWS, response }) {
     this.response = response;
+    this.internalUsersApi = new helpers.InternalApiClient({
+      callerName: "driver-api",
+      functionName: "users-api",
+      AWS,
+    });
     this.internalJobsApi = new helpers.InternalApiClient({
       callerName: "driver-api",
       functionName: "jobs-api",
@@ -73,7 +78,11 @@ class Handler {
   };
 
   runPlaybook = async (user, playbook, loadtest, jobId) => {
-    const jobsApi = new JobsApiClient(user, this.internalJobsApi);
+    const jobsApi = new JobsApiClient(
+      user,
+      this.internalJobsApi,
+      this.internalUsersApi
+    );
     const detail = playbook.Steps[0];
     const usersCount = detail["users"];
     const userCallParams = { ...detail };

@@ -3,12 +3,17 @@
 const AWS = require("aws-sdk");
 const helpers = require("@moggiez/moggies-lambda-helpers");
 const auth = require("@moggiez/moggies-auth");
-const { HttpClient } = require("./httpClient");
 const { JobsApiClient } = require("./jobsApiClient");
 
 const { Handler } = require("./handler");
 
 const DEBUG = false;
+
+const internalUsersApi = new helpers.InternalApiClient({
+  callerName: "driver-api",
+  functionName: "users-api",
+  AWS,
+});
 
 const internalJobsApi = new helpers.InternalApiClient({
   callerName: "driver-api",
@@ -28,18 +33,15 @@ const internalPlaybooksApi = new helpers.InternalApiClient({
   AWS,
 });
 
-const usersApiUrl = "https://users-api.moggies.io";
 const getOrganisationId = async (user, response) => {
-  const http = new HttpClient(user);
-  const usersResponse = await http.get(`${usersApiUrl}/${user.id}`);
-  if (
-    usersResponse.status != 200 ||
-    !("OrganisationId" in usersResponse.data)
-  ) {
+  const org = await internalUsersApi.invoke("getUserOrganisation", {
+    userId: user.id,
+  });
+  if (org != null) {
+    return org.OrganisationId;
+  } else {
     response(404, "Not found.");
   }
-
-  return usersResponse.data.OrganisationId;
 };
 
 const getPlaybook = async (loadtest) => {
@@ -84,7 +86,7 @@ exports.handler = async function (event, context, callback) {
 
   if (request.httpMethod == "POST") {
     // FETCH NECESSARY DATA
-    const orgId = await getOrganisationId(user);
+    const orgId = await getOrganisationId(user, response);
     const loadtest = await internalLoadtestsApi.invoke("getLoadtest", {
       organisationId: orgId,
       loadtestId: request.pathParameters.loadtestId,
@@ -105,7 +107,7 @@ exports.handler = async function (event, context, callback) {
       return;
     }
 
-    const jobsApi = new JobsApiClient(user, internalJobsApi);
+    const jobsApi = new JobsApiClient(user, internalJobsApi, internalUsersApi);
     const jobId = await jobsApi.createJob({});
 
     // UPDATED LOADTEST
