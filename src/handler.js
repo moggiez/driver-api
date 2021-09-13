@@ -113,6 +113,7 @@ class Handler {
       i++;
       userInvertedIndex = usersCount - i;
     }
+    await jobsApi.createTasks();
     await events.triggerUserCalls();
   };
 }
